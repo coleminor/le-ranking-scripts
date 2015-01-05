@@ -90,6 +90,10 @@ sub get_member_count {
 
 sub get_member_lists {
   my ($c) = @_;
+  unless (-d $sdir) {
+    make_path $sdir;
+    print "created directory $sdir\n";
+  }
   my $p = $members_per_list;
   my $n = int($c / $p);
   print "getting $n member lists ($p members per page)\n";
