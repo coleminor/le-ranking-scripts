@@ -241,7 +241,7 @@ def main():
         ' containing the user stat tables.',
     )
     p.add_argument('-o', '--older-than',
-        metavar='DAYS', default=7,
+        metavar='DAYS', default=7, type=int,
         help='Only scan users that have not'
         ' been scanned in this many days.',
     )
