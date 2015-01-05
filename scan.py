@@ -163,17 +163,15 @@ def insert_public_state(c, m):
     insert_player(c, m)
     insert_stats(c, m)
                 
-def process_fields(d, m):
-    c = d.cursor()
+def process_fields(c, m):
     if 'race' not in m:
         insert_scan(c, m, 'fail')
     elif 'l_tot' not in m:
         insert_private_state(c, m)
     else:
         insert_public_state(c, m)
-    d.commit()
 
-def check_user(d, i, n):
+def check_user(cu, i, n):
     u = view_url
     p = {'user':n}
     r = requests.get(u, params=p)
@@ -184,7 +182,7 @@ def check_user(d, i, n):
     m = extract_pairs(t)
     extract_name(t, m)
     m['user_id'] = i
-    process_fields(d, m)
+    process_fields(cu, m)
 
 def get_unchecked_users(c):
     q = '''
@@ -218,19 +216,31 @@ def get_stale_users(c, o):
     print('selected %d existing users' % len(l))
     return l
 
-def update_users(d, o):
+def update_users(d, o, ci):
     c = d.cursor()
     a = []
     a += get_unchecked_users(c)
     a += get_stale_users(c, o)
     t = len(a)
     print('%d total users to check' % t)
+    if ci > 0:
+        print('will commit after every'
+            ' %d insert(s)' % ci)
+    elif ci < 1:
+        print('data will be committed once'
+            ' all scans are complete')
+    cc = 0
     for e, r in enumerate(a):
         i, n = r
         print('[%d/%d] requesting scan of'
             ' user %d (%s)' % (e + 1, t, i, n))
-        check_user(d, i, n)
+        check_user(c, i, n)
+        cc += 1
+        if ci > 0 and cc >= ci:
+            d.commit()
+            cc = 0
         sleep(3)
+    d.commit()
 
 def main():
     p = ArgumentParser(
@@ -245,9 +255,15 @@ def main():
         help='Only scan users that have not'
         ' been scanned in this many days.',
     )
+    p.add_argument('-c', '--commit-interval',
+        metavar='N', default=10, type=int,
+        help='Commit data to database every'
+        ' N individual user scans.',
+    )
     a = p.parse_args()
     d = sqlite3.connect(a.database)
-    update_users(d, a.older_than)
+    i = a.commit_interval
+    update_users(d, a.older_than, i)
 
 if __name__ == '__main__':
     main()
