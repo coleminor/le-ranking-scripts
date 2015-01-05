@@ -107,7 +107,7 @@ sub get_member_lists {
     }
     my $t = "$base/memberlist.php?start=$s";
     get $t;
-    $m->save_content($f);
+    $m->save_content($f, binmode => ':utf8');
     my $b = -s $f;
     die "no data saved" unless $b;
     print "  $b bytes saved to $f\n";
