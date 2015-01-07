@@ -224,7 +224,7 @@ def print_ranking(r, f, o):
         m += 1
     h = m // 2
     for i in range(h):
-        print(a[i] + 8*' ' + a[i + h])
+        print(a[i], 6*' ', a[i + h])
 
 def print_rankings(c, d1, d2, m):
     for f in skill_order:
